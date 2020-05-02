@@ -18,16 +18,42 @@
 
 n_col = 7
 n_row = 6
+diagonal_ind_tr_bl = row(game_state)-col(game_state)
+diagonal_ind_tl_br = col(game_state)+row(game_state)
 
 player_beispiel <- function(game_state,
                     player_id,
                     possible){
-  n_row <<- n_row(game_state)
-  n_col <<- n_col(game_state)
-  if (length(possible) == 1) selected_move <- possible # Einschränkung, weil sample(6, size = 1) in Wirklichkeit sample(1:6, size = 1) macht
-  if (length(possible) > 1)  selected_move <- sample(possible, size = 1)
+  # store number of rows
+  n_row <<- nrow(game_state)
+  # store number of cols
+  n_col <<- ncol(game_state)
   
-  return(selected_move = selected_move)
+  # get diagonals in top right to bottom left (increasing order)
+  diagonal_ind_tr_bl <<- row(game_state)-col(game_state)
+  # get diagonals top left to bottom right (increasing order)
+  diagonal_ind_tl_br <<- col(game_state)+row(game_state)
+  
+  # if only one move is possible, return that one
+  if (length(possible) == 1) selected_move <- possible
+  
+  # if you are the first to move, select the middle
+  if (all(game_state==0)) selected_move <- 4
+  
+  # get scores for different state
+  scores = vector()
+  for (move in possible){
+    
+    game_state_after_move = make_move(game_state, move, player_id) 
+    # check if we have to reduce possible
+    score_move = evaluate(game_state_after_move)
+    scores = c(scores, score_move)
+
+  }
+  print(paste0("Scores: ", scores))
+  best_move = possible[which(scores==max(scores))[1]]
+    
+  return(selected_move = best_move)
   
 }
 
@@ -38,14 +64,19 @@ attr(player_beispiel, 'description') <- 'Verliert vielleicht nicht' # In den Att
 
 
 
-game_state <- matrix(data = rep(0, 6*7), nrow = 6, ncol = 7)
-game_state[1, 1] <- -1
-game_state[1, 2] <- 1
-game_state
-player_id <- -1
-player_id
-possible <- 1:7
-possible
+make_move <- function(game_state, move, player){
+  board_col = game_state[, move]
+  if (0%in%board_col){
+    print(paste0("Throw coin in column ",move))
+    coin_pos = min(which(board_col==0))
+    game_state[coin_pos,move] = player
+  } else {
+    print(paste("ERROR - MOVE ",move,"  NOT POSSIBLE"))
+    print(game_state)
+    stop("Stopped")
+  }
+  return(game_state)
+}
 
 
 evaluate_row <- function(board_row, board_row_below=rep(1,n_col), len_row=n_col){
@@ -86,13 +117,12 @@ evaluate_col <- function(board_col){
   return(eval_value)
 }
 
-
-evaluate <- function(game_state, possible){
+evaluate <- function(game_state){
   scores = vector()
   # evaluate verticals
   
   scores_vertical = vector()
-  for (board_col_pos in possible){
+  for (board_col_pos in 1:n_col){
     board_col = game_state[,board_col_pos]
     top_coin_pos = max(which(board_col!=0),0)
     if (top_coin_pos == 0) scores_vertical = c(scores_vertical, 0)
@@ -130,21 +160,17 @@ evaluate <- function(game_state, possible){
   
   # evaluate diagonal top right to bottom left
   scores_diagonal_tr_bl = vector()
-  # get diagonals in increasing order
-  diagonal_ind = row(game_state)-col(game_state)
+
   for (board_dia_pos in (1-n_col):(n_row-1)){
-    if (board_dia_pos==0){
-      print("hi")
-    }
     # get diagonal
-    diag_pos = game_state[diagonal_ind==board_dia_pos]
+    diag_pos = game_state[diagonal_ind_tr_bl==board_dia_pos]
     if (length(diag_pos)<n_win){
       # diagonals that are <4 are not relevant
       scores_diagonal_tr_bl = c(scores_diagonal_tr_bl,0)
       next
     }
     # diags with pos one lower are below
-    diag_pos_below = game_state[diagonal_ind==(board_dia_pos-1)]
+    diag_pos_below = game_state[diagonal_ind_tr_bl==(board_dia_pos-1)]
     # when board_diag > 0 we are on the left side of the diagonal.
     # The diagonal below will be shorter (not important since evaluate_row doesn't care)
     # when board_diag<=0, we are on the right side of the diagonal,
@@ -164,18 +190,17 @@ evaluate <- function(game_state, possible){
     
   # evaluate diagonal top left top to bottom right
   scores_diagonal_tl_br = vector()
-  # get diagonals in decreasing order
-  diagonal_ind = col(game_state)+row(game_state)
+
   for (board_dia_pos in (1+1):(n_row+n_col)){
     # get diagonal
-    diag_pos = game_state[diagonal_ind==board_dia_pos]
+    diag_pos = game_state[diagonal_ind_tl_br==board_dia_pos]
     if (length(diag_pos)<n_win){
       # diagonals that are <4 are not relevant
       scores_diagonal_tl_br = c(scores_diagonal_tl_br,0)
       next
     }
     # diags with pos one lower are below
-    diag_pos_below = game_state[diagonal_ind==(board_dia_pos-1)]
+    diag_pos_below = game_state[diagonal_ind_tl_br==(board_dia_pos-1)]
     
     # when board_dia_pos <= 8, diag_below is shorter by one and
     # needs extension on the right side (bottom_row)
@@ -190,19 +215,28 @@ evaluate <- function(game_state, possible){
   }
   scores = c(scores, scores_diagonal_tl_br)
   
+  # Compute total score. Square (so3 has more value than 2), 
+  # with respect to sign, and add scores.
   
-  return(scores_diagonal_tl_br)
+  score = sum(scores*abs(scores))
+  return(score)
 }
 
-game_state[,1] = c(-1,-1,-1,1,1,0)
-game_state[,2] = c(1,1,-1,1,1,1)
+
+game_state <- matrix(data = rep(0, 6*7), nrow = 6, ncol = 7)
+#game_state[1, 1] <- -1
+#game_state[1, 2] <- 1
+game_state[,1] = c(-1,-1,-1,1,0,0)
+game_state[,2] = c(1,1,-1,1,1,0)
 game_state[,3] = c(-1,1,-1,1,0,0)
 game_state[,3] = c(0,0,0,0,0,0)
 game_state[,3] = c(-1,1,-1,1,0,0)
 game_state[,4] = c(1,-1,1,0,0,0)
-game_state[,5] = c(1,-1,1,-1,-1,-1)
+game_state[,5] = c(1,-1,1,-1,-1,0)
+game_state
+player_id <- -1
+player_id
+possible <- 1:7
+possible
 
-evaluate(game_state,possible)
-
-
-# TODO: loss function to compute final score (square (with respect to sign) and add)
+player_beispiel(game_state, 1, possible)
