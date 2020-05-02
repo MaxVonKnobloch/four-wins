@@ -223,20 +223,51 @@ evaluate <- function(game_state){
 }
 
 
+
+plot_game <- function(game_state){
+  plot.new()
+  plot.window(c(0,n_col),c(0,n_row))
+  abline(v=(seq(1,(n_col-1),1)), col="lightgray")
+  abline(h=(seq(1,(n_row-1),1)), col="lightgray")
+  #plot(0,type='n',axes=FALSE)
+  for (i in 0:(n_row-1)){
+    board_row = game_state[(i+1),] 
+    x_coords = seq(0.5,n_row+0.5,1)[board_row==1]
+    y_coords = rep((i+0.5),sum(board_row==1))
+    points(x_coords,y_coords,type="p", col="red", pch=19, cex=2.5)
+    
+    x_coords = seq(0.5,n_row+0.5,1)[board_row==-1]
+    y_coords = rep((i+0.5),sum(board_row==-1))
+    points(x_coords,y_coords,type="p", col="blue", pch=19, cex=2.5)
+  }
+  for (j in 1:n_col){
+    text(j-0.5,0,(j))
+  }
+}
+
 game_state <- matrix(data = rep(0, 6*7), nrow = 6, ncol = 7)
 #game_state[1, 1] <- -1
 #game_state[1, 2] <- 1
-game_state[,1] = c(-1,-1,-1,1,0,0)
-game_state[,2] = c(1,1,-1,1,1,0)
-game_state[,3] = c(-1,1,-1,1,0,0)
-game_state[,3] = c(0,0,0,0,0,0)
-game_state[,3] = c(-1,1,-1,1,0,0)
-game_state[,4] = c(1,-1,1,0,0,0)
-game_state[,5] = c(1,-1,1,-1,-1,0)
-game_state
+#game_state[,1] = c(-1,-1,-1,1,0,0)
+#game_state[,2] = c(1,1,-1,1,1,0)
+#game_state[,3] = c(-1,1,-1,1,0,0)
+#game_state[,3] = c(0,0,0,0,0,0)
+#game_state[,3] = c(-1,1,-1,1,0,0)
+#game_state[,4] = c(1,-1,1,0,0,0)
+#game_state[,5] = c(1,-1,1,-1,-1,1)
+#game_state[,6] = c(1,-1,1,0,0,0)
+#game_state[,7] = c(1,-1,1,-1,-1,1)
+#game_state
 player_id <- -1
 player_id
 possible <- 1:7
-possible
-
-player_beispiel(game_state, 1, possible)
+#possible <- 
+#plot_game(game_state)
+#game_state <- make_move(game_state = game_state, move = player_beispiel(game_state, 1, possible), player = 1)
+#game_state <- make_move(game_state, move = 2, player = -1)
+#game_state_bak <- game_state
+#write.csv("game_state_bak.csv",game_state_bak)
+#write.table(game_state_bak,"game_state_bak.csv")
+#game_state <- read.table("game_state_bak.csv")
+#possible <- possible[possible!=4]
+#game_state <- make_move(game_state = game_state, move = player_beispiel(game_state, 1, possible), player = 1)
