@@ -16,11 +16,6 @@
 # possible <- 1:7
 # possible
 
-n_col = 7
-n_row = 6
-diagonal_ind_tr_bl = row(game_state)-col(game_state)
-diagonal_ind_tl_br = col(game_state)+row(game_state)
-
 
 make_move <- function(game_state, move, player){
   board_col = game_state[, move]
@@ -138,7 +133,7 @@ evaluate <- function(game_state){
       diag_values = evaluate_row(diag_pos, diag_pos_below, len_row=length(diag_pos))
     } else {
       if (board_dia_pos == 0){
-        evaluate_row(diag_pos, diag_pos_below, len_row=length(diag_pos))
+        diag_values = evaluate_row(diag_pos, diag_pos_below, len_row=length(diag_pos))
       } else {
         # for lb_rt diagonals, we extend on the left side (bottom_row)
         diag_values = evaluate_row(diag_pos, c(1,diag_pos_below), len_row=length(diag_pos))
@@ -272,20 +267,23 @@ minimax <- function(game_state, possible, depth, is_max_player){
   return(minEval)
 }
 
-player_minimax_d3 <- function(game_state,
+player_minimax_d4 <- function(game_state,
                             player_id,
                             possible){
   # store number of rows
-  n_row <<- nrow(game_state)
+  assign("n_row", nrow(game_state))
   # store number of cols
-  n_col <<- ncol(game_state)
+  assign("n_col", ncol(game_state))
   
+  assign("n_win", 4)
   # set depth in minimax tree
-  depth = 2
+  depth = 3
+  
   # get diagonals in top right to bottom left (increasing order)
-  diagonal_ind_tr_bl <<- row(game_state)-col(game_state)
+  assign("diagonal_ind_tr_bl", row(game_state)-col(game_state))
   # get diagonals top left to bottom right (increasing order)
-  diagonal_ind_tl_br <<- col(game_state)+row(game_state)
+  assign("diagonal_ind_tl_br", col(game_state)+row(game_state))
+  
   
   # if only one move is possible, return that one
   if (length(possible) == 1) return(possible)
@@ -317,9 +315,9 @@ player_minimax_d3 <- function(game_state,
   return(selected_move = best_move)
 }
 
-attr(player_beispiel, 'name')        <- 'minimax_d4'              
-attr(player_beispiel, 'author')      <- 'MaxK'
-attr(player_beispiel, 'description') <- 'Auf meinem Rechner schafft er den Zug in < 3 Sek!'
+attr(player_minimax_d4, 'name')        <- 'minimax_d4'              
+attr(player_minimax_d4, 'author')      <- 'MaxK'
+attr(player_minimax_d4, 'description') <- 'Auf meinem Rechner schafft er den Zug in < 3 Sek!'
 
 
 plot_game <- function(game_state){
@@ -347,11 +345,3 @@ plot_game <- function(game_state){
   }
 }
 
-#game_state <- matrix(data = rep(0, 6*7), nrow = 6, ncol = 7)
-#possible <- 1:7
-#player_id = 1
-#game_state[1,] <- c(1,1,-1,-1,1,-1,-1)
-#player_minimax_d3(game_state, 1, possible)
-#plot_game(game_state)
-#game_state <- make_move(game_state = game_state, move = player_minimax_d4(game_state, 1, possible), player = player_id)
-#game_state <- make_move(game_state, move = 7, player = (player_id*(-1)))
